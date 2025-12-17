@@ -41,6 +41,7 @@ public class SecurityConfig {
         "/api/attendance/admin/export",
         "/api/attendance/admin/import", 
         "/api/attendance/admin/template",
+        "/api/qr-attendance/admin/qr/image",
         "/api/employees/admin/export",
         "/api/employees/admin/import",
         "/api/employees/admin/template",
