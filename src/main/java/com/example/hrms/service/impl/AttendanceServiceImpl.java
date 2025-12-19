@@ -134,6 +134,11 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
+    public void adminDeleteAll() {
+        attendanceRepo.deleteAll();
+    }
+
+    @Override
     public List<AttendanceDTO> getAttendanceOfMonthForAll(int month, int year) {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());

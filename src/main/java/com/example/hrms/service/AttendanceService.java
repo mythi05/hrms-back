@@ -27,5 +27,7 @@ public interface AttendanceService {
 
     void adminDelete(Long id);
 
+    void adminDeleteAll();
+
     List<AttendanceDTO> getAttendanceOfMonthForAll(int month, int year);
 }

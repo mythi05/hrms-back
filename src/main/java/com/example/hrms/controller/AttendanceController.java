@@ -1,4 +1,5 @@
 package com.example.hrms.controller;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.example.hrms.dto.AttendanceDTO;
 import com.example.hrms.service.AttendanceService;
@@ -78,6 +79,13 @@ public class AttendanceController {
     @DeleteMapping("/admin/{id}")
     public ResponseEntity<Void> adminDelete(@PathVariable Long id) {
         attendanceService.adminDelete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/admin/all")
+    @PreAuthorize("hasAnyRole('ADMIN','HR')")
+    public ResponseEntity<Void> adminDeleteAll() {
+        attendanceService.adminDeleteAll();
         return ResponseEntity.noContent().build();
     }
 
