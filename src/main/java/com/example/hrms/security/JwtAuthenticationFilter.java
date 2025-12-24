@@ -48,15 +48,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String jwt = parseJwt(request);
             if (jwt != null) {
-                if (jwtTokenUtil.validateToken(jwt)) {
-                    String username = jwtTokenUtil.extractUsername(jwt);
-                    
+                if (!jwtTokenUtil.validateToken(jwt)) {
+                    log.warn("Invalid JWT token for request {}", request.getRequestURI());
+                    handleException(response, "Token không hợp lệ", HttpStatus.UNAUTHORIZED);
+                    return;
+                }
+
+                String username = jwtTokenUtil.extractUsername(jwt);
+                if (username != null) {
                     employeeRepository.findByUsername(username)
                         .ifPresent(user -> {
                             UserDetails userDetails = createUserDetails(user);
                             setAuthentication(userDetails, request);
                         });
+                } else {
+                    log.warn("JWT token has no subject (username) for request {}", request.getRequestURI());
                 }
+            } else {
+                log.debug("No JWT token found in request {}", request.getRequestURI());
             }
         } catch (ExpiredJwtException ex) {
             log.error("JWT token expired: {}", ex.getMessage());

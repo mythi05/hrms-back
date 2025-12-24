@@ -67,11 +67,13 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((request, response, authException) -> {
-                    response.setStatus(403);
+                    // Trả 401 khi chưa xác thực (Unauthorized)
+                    response.setStatus(401);
                     response.setContentType("application/json");
-                    response.getWriter().write("{\"message\":\"Access denied: " + authException.getMessage() + "\"}");
+                    response.getWriter().write("{\"message\":\"Unauthorized: " + authException.getMessage() + "\"}");
                 })
                 .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    // Trả 403 khi đã xác thực nhưng thiếu quyền (Forbidden)
                     response.setStatus(403);
                     response.setContentType("application/json");
                     response.getWriter().write("{\"message\":\"Access denied: " + accessDeniedException.getMessage() + "\"}");
