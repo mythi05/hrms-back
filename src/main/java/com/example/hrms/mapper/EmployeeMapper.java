@@ -68,6 +68,11 @@ public class EmployeeMapper {
                     .collect(Collectors.toList());
         }
 
+        List<String> certificates = new ArrayList<>();
+        if (e.getCertificates() != null) {
+            certificates.addAll(e.getCertificates());
+        }
+
         return EmployeeDTO.builder()
                 .id(e.getId())
                 .fullName(e.getFullName())
@@ -88,7 +93,7 @@ public class EmployeeMapper {
                 .employeeCode(e.getEmployeeCode())
                 .salary(e.getSalary())
                 .skills(skillDTOs)
-                .certificates(e.getCertificates() != null ? e.getCertificates() : new ArrayList<>())
+                .certificates(certificates)
                 .username(e.getUsername())
                 .role(e.getRole() != null ? e.getRole().name() : null)
                 .build();

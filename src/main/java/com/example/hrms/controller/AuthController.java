@@ -86,21 +86,21 @@ public class AuthController {
     @PostMapping("/init")
     public ResponseEntity<?> initAdmin() {
 
-        // Nếu admin1 đã tồn tại -> báo lỗi
-        if (employeeRepository.findByUsername("admin1").isPresent()) {
+        // Nếu admin đã tồn tại -> báo lỗi
+        if (employeeRepository.findByUsername("admin").isPresent()) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Admin already exists"));
+                .body(Map.of("error", "Admin already exists"));
         }
 
-        // Tạo admin mặc định
+        // Tạo admin mặc định (username: admin / password: admin123)
         Employee admin = Employee.builder()
-                .username("admin1")
-                .password(passwordEncoder.encode("admin123"))
-                .fullName("Administrator")
-                .email("admin@example.com")
-                .role(com.example.hrms.entity.Role.ADMIN)
-                .salary(0)
-                .build();
+            .username("admin")
+            .password(passwordEncoder.encode("admin123"))
+            .fullName("Administrator")
+            .email("admin@example.com")
+            .role(com.example.hrms.entity.Role.ADMIN)
+            .salary(0)
+            .build();
 
         employeeRepository.save(admin);
 

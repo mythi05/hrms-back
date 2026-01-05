@@ -46,7 +46,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                    HttpServletResponse response,
                                    FilterChain filterChain) throws ServletException, IOException {
         try {
+            String authHeader = request.getHeader(AUTHORIZATION_HEADER);
+            log.debug("Authorization header for {}: {}", request.getRequestURI(), authHeader);
+            
             String jwt = parseJwt(request);
+            log.debug("Parsed JWT for {}: {}", request.getRequestURI(), jwt != null ? "token present" : "no token");
+            
             if (jwt != null) {
                 if (!jwtTokenUtil.validateToken(jwt)) {
                     log.warn("Invalid JWT token for request {}", request.getRequestURI());

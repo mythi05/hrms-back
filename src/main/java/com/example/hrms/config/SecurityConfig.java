@@ -32,6 +32,7 @@ public class SecurityConfig {
 
     private static final String[] WHITE_LIST_URL = {
         "/api/auth/**",
+        "/error",
         "/v2/api-docs",
         "/v3/api-docs/**",
         "/swagger-ui/**",
@@ -52,6 +53,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(WHITE_LIST_URL).permitAll()
+                .requestMatchers("/api/qr-attendance/admin/qr/image").permitAll()
                 .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "HR")
                 .anyRequest().authenticated()
             )
@@ -78,7 +80,8 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
             "https://hrms-front-beta.vercel.app",
-            "http://localhost:3000"
+            "http://localhost:3000",
+            "https://your-admin.vercel.app"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));

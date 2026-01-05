@@ -2,21 +2,30 @@ package com.example.hrms.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
 
 @Component
 public class JwtTokenUtil {
 
-    // Có thể config trong application.properties để dễ thay đổi
-    private final String SECRET_KEY = "mythijwtsecretkeymythijwtsecretkey";
-    private final long EXPIRATION_TIME = 86400000; // 1 ngày
+    private final Key signingKey;
+    private final long expirationTime;
+
+    public JwtTokenUtil(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.expiration:86400000}") long expirationTime
+    ) {
+        this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.expirationTime = expirationTime;
+    }
 
     private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+        return signingKey;
     }
 
     // ✅ Tạo token với username + employeeId + roles
@@ -24,7 +33,7 @@ public class JwtTokenUtil {
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .addClaims(Map.of(
                         "employeeId", employeeId,
                         "role", role

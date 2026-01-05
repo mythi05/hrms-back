@@ -11,6 +11,7 @@ import com.example.hrms.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public EmployeeDTO getMe(String username) {
         Employee emp = repo.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
@@ -41,6 +43,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public EmployeeDTO getByUsername(String username) {
         Employee e = repo.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
@@ -108,6 +111,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public EmployeeDTO getById(Long id) {
         return repo.findById(id)
                 .map(EmployeeMapper::toDTO)
@@ -115,6 +119,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<EmployeeDTO> getAll() {
         return repo.findAll()
                 .stream()

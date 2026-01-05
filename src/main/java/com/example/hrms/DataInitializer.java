@@ -26,40 +26,39 @@ public class DataInitializer {
     @Bean
     public CommandLineRunner initAdminUser() {
         return args -> {
-            String adminUsername = "admin";
+            log.info("=== DataInitializer started ===");
+            try {
+                String adminUsername = "admin";
+                String adminPassword = "admin123"; // Match frontend login form
 
-            if (userRepository.existsByUsername(adminUsername)) {
-                log.info("Admin user '{}' đã tồn tại, bỏ qua khởi tạo.", adminUsername);
-                return;
+                log.info("Checking if admin user exists...");
+                // Check if admin already exists in Employee table (AuthController uses EmployeeRepository)
+                if (employeeRepository.findByUsername(adminUsername).isPresent()) {
+                    log.info("Admin user '{}' đã tồn tại, bỏ qua khởi tạo.", adminUsername);
+                    return;
+                }
+
+                log.info("Creating new admin user...");
+                // Create employee for admin (this is what AuthController uses for login)
+                Employee adminEmp = Employee.builder()
+                        .fullName("System Administrator")
+                        .email("admin@example.com")
+                        .phone("0123456789")
+                        .startDate(LocalDate.now())
+                        .department("IT")
+                        .position("ADMIN")
+                        .username(adminUsername)
+                        .password(passwordEncoder.encode(adminPassword))
+                        .role(Role.ADMIN)
+                        .build();
+
+                adminEmp = employeeRepository.save(adminEmp);
+                log.info("Đã khởi tạo tài khoản admin mặc định: username='{}', password='{}'", adminUsername, adminPassword);
+                log.info("=== DataInitializer completed ===");
+            } catch (Exception ex) {
+                log.error("ERROR in DataInitializer: {}", ex.getMessage(), ex);
+                throw new RuntimeException("DataInitializer failed", ex);
             }
-
-            // Tạo employee cho admin
-            Employee adminEmp = Employee.builder()
-                    .fullName("System Administrator")
-                    .email("admin@example.com")
-                    .phone("0123456789")
-                    .startDate(LocalDate.now())
-                    .department("IT")
-                    .position("ADMIN")
-                    .username(adminUsername)
-                    .password(passwordEncoder.encode("admin123"))
-                    .role(Role.ADMIN)
-                    .build();
-
-            adminEmp = employeeRepository.save(adminEmp);
-
-            // Tạo user cho admin, link với employee
-            User adminUser = User.builder()
-                    .username(adminUsername)
-                    .password(passwordEncoder.encode("admin123"))
-                    .role(User.Role.ADMIN)
-                    .employeeId(adminEmp.getId())
-                    .isActive(true)
-                    .build();
-
-            userRepository.save(adminUser);
-
-            log.info("Đã khởi tạo tài khoản admin mặc định: username='{}', password='admin123'", adminUsername);
         };
     }
 }
