@@ -29,7 +29,6 @@ public class Employee {
     private String phone;
     private LocalDate dob;
     private String address;
-    private String avatarUrl;
     private String position;
     private String department;
     @Column(name = "department_id")

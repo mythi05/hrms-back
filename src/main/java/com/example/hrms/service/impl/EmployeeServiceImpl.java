@@ -52,7 +52,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         Optional.ofNullable(dto.getEmail()).ifPresent(existing::setEmail);
         Optional.ofNullable(dto.getPhone()).ifPresent(existing::setPhone);
         Optional.ofNullable(dto.getAddress()).ifPresent(existing::setAddress);
-        Optional.ofNullable(dto.getAvatarUrl()).ifPresent(existing::setAvatarUrl);
 
         Optional.ofNullable(dto.getEmailNotifications()).ifPresent(existing::setEmailNotifications);
         Optional.ofNullable(dto.getPushNotifications()).ifPresent(existing::setPushNotifications);

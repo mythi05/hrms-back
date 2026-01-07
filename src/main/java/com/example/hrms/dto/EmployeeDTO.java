@@ -21,7 +21,7 @@ public class EmployeeDTO {
     private LocalDate dob;
 
     private String address;
-    private String avatarUrl;
+    
     private String position;
     private String department;
     private Long departmentId;
