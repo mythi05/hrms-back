@@ -21,6 +21,7 @@ public class EmployeeDTO {
     private LocalDate dob;
 
     private String address;
+    private String avatarUrl;
     private String position;
     private String department;
     private Long departmentId;
@@ -46,4 +47,13 @@ public class EmployeeDTO {
     private String username;
     private String password;
     private String role; // ADMIN, HR, EMPLOYEE
+
+    private Boolean emailNotifications;
+    private Boolean pushNotifications;
+    private Boolean leaveNotifications;
+    private Boolean payrollNotifications;
+
+    private String language;
+    private String theme;
+    private String dateFormat;
 }

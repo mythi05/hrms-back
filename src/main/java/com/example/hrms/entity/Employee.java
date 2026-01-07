@@ -29,6 +29,7 @@ public class Employee {
     private String phone;
     private LocalDate dob;
     private String address;
+    private String avatarUrl;
     private String position;
     private String department;
     @Column(name = "department_id")
@@ -50,6 +51,27 @@ public class Employee {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @Builder.Default
+    private Boolean emailNotifications = true;
+
+    @Builder.Default
+    private Boolean pushNotifications = true;
+
+    @Builder.Default
+    private Boolean leaveNotifications = true;
+
+    @Builder.Default
+    private Boolean payrollNotifications = true;
+
+    @Builder.Default
+    private String language = "vi";
+
+    @Builder.Default
+    private String theme = "light";
+
+    @Builder.Default
+    private String dateFormat = "DD/MM/YYYY";
 
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

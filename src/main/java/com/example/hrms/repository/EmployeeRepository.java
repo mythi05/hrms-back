@@ -1,6 +1,7 @@
 package com.example.hrms.repository;
 
 import com.example.hrms.entity.Employee;
+import com.example.hrms.entity.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -24,4 +25,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     
     // Find employees by department ID
     List<Employee> findByDepartmentId(Long departmentId);
+
+    List<Employee> findByRole(Role role);
 }

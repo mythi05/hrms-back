@@ -31,6 +31,7 @@ public class EmployeeMapper {
                 .phone(dto.getPhone())
                 .dob(dto.getDob())
                 .address(dto.getAddress())
+                .avatarUrl(dto.getAvatarUrl())
                 .position(dto.getPosition())
                 .department(dto.getDepartment())
                 .departmentId(dto.getDepartmentId())
@@ -46,6 +47,13 @@ public class EmployeeMapper {
                 .username(dto.getUsername())
                 .password(dto.getPassword() != null ? passwordEncoder.encode(dto.getPassword()) : null)
                 .role(dto.getRole() != null ? Role.valueOf(dto.getRole().toUpperCase()) : Role.EMPLOYEE)
+                .emailNotifications(dto.getEmailNotifications())
+                .pushNotifications(dto.getPushNotifications())
+                .leaveNotifications(dto.getLeaveNotifications())
+                .payrollNotifications(dto.getPayrollNotifications())
+                .language(dto.getLanguage())
+                .theme(dto.getTheme())
+                .dateFormat(dto.getDateFormat())
                 .skills(skills)
                 .certificates(dto.getCertificates() != null ? dto.getCertificates() : new ArrayList<>())
                 .build();
@@ -80,6 +88,7 @@ public class EmployeeMapper {
                 .phone(e.getPhone())
                 .dob(e.getDob())
                 .address(e.getAddress())
+                .avatarUrl(e.getAvatarUrl())
                 .position(e.getPosition())
                 .department(e.getDepartment())
                 .departmentId(e.getDepartmentId())
@@ -96,6 +105,13 @@ public class EmployeeMapper {
                 .certificates(certificates)
                 .username(e.getUsername())
                 .role(e.getRole() != null ? e.getRole().name() : null)
+                .emailNotifications(e.getEmailNotifications())
+                .pushNotifications(e.getPushNotifications())
+                .leaveNotifications(e.getLeaveNotifications())
+                .payrollNotifications(e.getPayrollNotifications())
+                .language(e.getLanguage())
+                .theme(e.getTheme())
+                .dateFormat(e.getDateFormat())
                 .build();
     }
 

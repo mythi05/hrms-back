@@ -33,6 +33,13 @@ public class EmployeeController {
         return ResponseEntity.ok(profile);
     }
 
+    @PutMapping("/me")
+    public ResponseEntity<EmployeeDTO> updateMyProfile(Authentication authentication, @RequestBody EmployeeDTO dto) {
+        String username = authentication.getName();
+        EmployeeDTO updated = employeeService.updateMe(username, dto);
+        return ResponseEntity.ok(updated);
+    }
+
     // --- Lấy employee theo id ---
     @GetMapping("/{id}")
     public ResponseEntity<EmployeeDTO> getEmployeeById(@PathVariable Long id) {

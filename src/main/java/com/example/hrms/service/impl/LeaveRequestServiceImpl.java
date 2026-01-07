@@ -50,6 +50,30 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         LeaveRequest saved = leaveRepo.save(entity);
         LeaveRequestDTO dtoSaved = LeaveRequestMapper.toDTO(saved);
         fillApproverName(dtoSaved);
+
+        Employee emp = null;
+        if (saved.getEmployeeId() != null) {
+            emp = employeeRepo.findById(saved.getEmployeeId()).orElse(null);
+        }
+        String who = emp != null ? (emp.getFullName() != null ? emp.getFullName() : emp.getUsername()) : ("Employee ID: " + saved.getEmployeeId());
+        String title = "Yêu cầu nghỉ phép mới";
+        String message = who + " đã tạo đơn nghỉ " + saved.getLeaveType() + " từ " + saved.getStartDate() + " đến " + saved.getEndDate() + ".";
+
+        if (saved.getEmployeeId() != null) {
+            String empTitle = "Đã gửi đơn nghỉ phép";
+            String empMessage = "Bạn đã gửi đơn nghỉ " + saved.getLeaveType() + " từ " + saved.getStartDate() + " đến " + saved.getEndDate() + ".";
+            try {
+                notificationService.createNotification(saved.getEmployeeId(), empTitle, empMessage, NotificationType.LEAVE_REQUEST_CREATED);
+            } catch (Exception ex) {
+                // best-effort: do not fail leave request creation if notification fails
+            }
+        }
+        try {
+            notificationService.createNotificationForAdmins(title, message, NotificationType.LEAVE_REQUEST_CREATED);
+        } catch (Exception ex) {
+            // best-effort: do not fail leave request creation if notification fails
+        }
+
         return dtoSaved;
     }
 

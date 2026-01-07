@@ -26,6 +26,7 @@ public class Notification {
     private String message;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 50)
     private NotificationType type;
 
     private boolean readFlag;
@@ -37,7 +38,9 @@ public class Notification {
         PAYROLL_UPDATED,
         LEAVE_APPROVED,
         LEAVE_REJECTED,
+        LEAVE_REQUEST_CREATED,
         TASK_ASSIGNED,
-        TASK_UPDATED
+        TASK_UPDATED,
+        TASK_STATUS_UPDATED
     }
 }

@@ -9,6 +9,8 @@ public interface NotificationService {
 
     void createNotification(Long employeeId, String title, String message, NotificationType type);
 
+    void createNotificationForAdmins(String title, String message, NotificationType type);
+
     List<NotificationDTO> getMyNotifications(String username);
 
     void markAsRead(Long notificationId, String username);

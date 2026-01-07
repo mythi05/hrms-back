@@ -147,6 +147,16 @@ public class TaskServiceImpl implements TaskService {
         task.setUpdatedAt(LocalDateTime.now());
 
         Task saved = taskRepository.save(task);
+
+        String title = "Cập nhật trạng thái công việc";
+        String message = (emp.getFullName() != null ? emp.getFullName() : emp.getUsername())
+                + " đã cập nhật công việc: " + saved.getTitle() + " -> " + saved.getStatus();
+        try {
+            notificationService.createNotificationForAdmins(title, message, NotificationType.TASK_STATUS_UPDATED);
+        } catch (Exception ex) {
+            // best-effort: do not fail task status update if notification fails
+        }
+
         return TaskMapper.toDTO(saved);
     }
 }

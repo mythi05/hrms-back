@@ -43,6 +43,30 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional
+    public EmployeeDTO updateMe(String username, EmployeeDTO dto) {
+        Employee existing = repo.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
+
+        Optional.ofNullable(dto.getFullName()).ifPresent(existing::setFullName);
+        Optional.ofNullable(dto.getEmail()).ifPresent(existing::setEmail);
+        Optional.ofNullable(dto.getPhone()).ifPresent(existing::setPhone);
+        Optional.ofNullable(dto.getAddress()).ifPresent(existing::setAddress);
+        Optional.ofNullable(dto.getAvatarUrl()).ifPresent(existing::setAvatarUrl);
+
+        Optional.ofNullable(dto.getEmailNotifications()).ifPresent(existing::setEmailNotifications);
+        Optional.ofNullable(dto.getPushNotifications()).ifPresent(existing::setPushNotifications);
+        Optional.ofNullable(dto.getLeaveNotifications()).ifPresent(existing::setLeaveNotifications);
+        Optional.ofNullable(dto.getPayrollNotifications()).ifPresent(existing::setPayrollNotifications);
+
+        Optional.ofNullable(dto.getLanguage()).ifPresent(existing::setLanguage);
+        Optional.ofNullable(dto.getTheme()).ifPresent(existing::setTheme);
+        Optional.ofNullable(dto.getDateFormat()).ifPresent(existing::setDateFormat);
+
+        return EmployeeMapper.toDTO(repo.save(existing));
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public EmployeeDTO getByUsername(String username) {
         Employee e = repo.findByUsername(username)

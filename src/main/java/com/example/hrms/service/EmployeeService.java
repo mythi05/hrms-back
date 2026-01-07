@@ -13,6 +13,8 @@ public interface EmployeeService {
 
     EmployeeDTO getMe(String username);
 
+    EmployeeDTO updateMe(String username, EmployeeDTO dto);
+
     EmployeeDTO getById(Long id);
 
     EmployeeDTO getByUsername(String username);
