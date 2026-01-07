@@ -127,10 +127,18 @@ public class AttendanceController {
     @PostMapping("/admin/import")
     public ResponseEntity<?> importAttendance(@RequestParam("file") MultipartFile file) {
         try {
-            if (!file.getOriginalFilename().endsWith(".xlsx") && 
-                !file.getOriginalFilename().endsWith(".xls") && 
-                !file.getOriginalFilename().endsWith(".csv")) {
-                return ResponseEntity.badRequest().body("Chỉ chấp nhận file Excel (.xlsx, .xls) hoặc CSV (.csv)");
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.badRequest().body(java.util.Map.of("message", "File rỗng hoặc không tồn tại"));
+            }
+
+            String originalFilename = file.getOriginalFilename();
+            if (originalFilename == null) {
+                return ResponseEntity.badRequest().body(java.util.Map.of("message", "Không xác định được tên file"));
+            }
+
+            String lowerName = originalFilename.toLowerCase();
+            if (!lowerName.endsWith(".xlsx") && !lowerName.endsWith(".xls") && !lowerName.endsWith(".csv")) {
+                return ResponseEntity.badRequest().body(java.util.Map.of("message", "Chỉ chấp nhận file Excel (.xlsx, .xls) hoặc CSV (.csv)"));
             }
 
             List<AttendanceDTO> attendances = excelService.importAttendanceFromExcel(file);
@@ -150,7 +158,7 @@ public class AttendanceController {
             return ResponseEntity.ok(new ImportResult(savedAttendances.size(), attendances.size()));
             
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Lỗi khi import file: " + e.getMessage());
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", "Lỗi khi import file: " + e.getMessage()));
         }
     }
 

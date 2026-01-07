@@ -51,6 +51,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional
     public EmployeeDTO update(Long id, EmployeeDTO dto) {
         Employee existing = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));

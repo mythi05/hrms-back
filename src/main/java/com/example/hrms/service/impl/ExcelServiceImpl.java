@@ -6,6 +6,7 @@ import com.example.hrms.entity.Attendance;
 import com.example.hrms.service.ExcelService;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +29,31 @@ import java.util.List;
 public class ExcelServiceImpl implements ExcelService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter DATE_FORMATTER_FLEX = DateTimeFormatter.ofPattern("d/M/yyyy");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
+    private static final DateTimeFormatter TIME_FORMATTER_FLEX = DateTimeFormatter.ofPattern("H:mm");
+
+    private static LocalDate parseDateFlexible(String value) {
+        if (value == null) return null;
+        String v = value.trim();
+        if (v.isEmpty()) return null;
+        try {
+            return LocalDate.parse(v, DATE_FORMATTER);
+        } catch (DateTimeParseException ignored) {
+            return LocalDate.parse(v, DATE_FORMATTER_FLEX);
+        }
+    }
+
+    private static LocalTime parseTimeFlexible(String value) {
+        if (value == null) return null;
+        String v = value.trim();
+        if (v.isEmpty()) return null;
+        try {
+            return LocalTime.parse(v, TIME_FORMATTER);
+        } catch (DateTimeParseException ignored) {
+            return LocalTime.parse(v, TIME_FORMATTER_FLEX);
+        }
+    }
 
     @Override
     public byte[] exportAttendanceToExcel(List<AttendanceDTO> attendances) {
@@ -137,7 +163,7 @@ public class ExcelServiceImpl implements ExcelService {
         }
 
         try (InputStream inputStream = file.getInputStream();
-             Workbook workbook = new XSSFWorkbook(inputStream)) {
+             Workbook workbook = WorkbookFactory.create(inputStream)) {
 
             Sheet sheet = workbook.getSheetAt(0);
             
@@ -176,7 +202,7 @@ public class ExcelServiceImpl implements ExcelService {
                     
                     LocalDate date;
                     if (dateCell.getCellType() == CellType.STRING) {
-                        date = LocalDate.parse(dateCell.getStringCellValue(), DATE_FORMATTER);
+                        date = parseDateFlexible(dateCell.getStringCellValue());
                     } else {
                         date = dateCell.getLocalDateTimeCellValue().toLocalDate();
                     }
@@ -186,7 +212,7 @@ public class ExcelServiceImpl implements ExcelService {
                     Cell checkInCell = row.getCell(4);
                     if (checkInCell != null && checkInCell.getCellType() != CellType.BLANK) {
                         if (checkInCell.getCellType() == CellType.STRING) {
-                            attendance.setCheckIn(LocalTime.parse(checkInCell.getStringCellValue(), TIME_FORMATTER));
+                            attendance.setCheckIn(parseTimeFlexible(checkInCell.getStringCellValue()));
                         } else {
                             attendance.setCheckIn(checkInCell.getLocalDateTimeCellValue().toLocalTime());
                         }
@@ -196,7 +222,7 @@ public class ExcelServiceImpl implements ExcelService {
                     Cell checkOutCell = row.getCell(5);
                     if (checkOutCell != null && checkOutCell.getCellType() != CellType.BLANK) {
                         if (checkOutCell.getCellType() == CellType.STRING) {
-                            attendance.setCheckOut(LocalTime.parse(checkOutCell.getStringCellValue(), TIME_FORMATTER));
+                            attendance.setCheckOut(parseTimeFlexible(checkOutCell.getStringCellValue()));
                         } else {
                             attendance.setCheckOut(checkOutCell.getLocalDateTimeCellValue().toLocalTime());
                         }
@@ -277,16 +303,16 @@ public class ExcelServiceImpl implements ExcelService {
                     if (values[3].trim().isEmpty()) {
                         throw new Exception("Thiếu ngày");
                     }
-                    attendance.setDate(LocalDate.parse(values[3].trim(), DATE_FORMATTER));
+                    attendance.setDate(parseDateFlexible(values[3]));
                     
                     // Check In (column 4) - optional
                     if (!values[4].trim().isEmpty()) {
-                        attendance.setCheckIn(LocalTime.parse(values[4].trim(), TIME_FORMATTER));
+                        attendance.setCheckIn(parseTimeFlexible(values[4]));
                     }
                     
                     // Check Out (column 5) - optional
                     if (!values[5].trim().isEmpty()) {
-                        attendance.setCheckOut(LocalTime.parse(values[5].trim(), TIME_FORMATTER));
+                        attendance.setCheckOut(parseTimeFlexible(values[5]));
                     }
                     
                     // Total Hours (column 6) - optional

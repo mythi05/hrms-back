@@ -3,17 +3,15 @@ package com.example.hrms.controller;
 import com.example.hrms.dto.EmployeeDTO;
 import com.example.hrms.entity.Employee;
 import com.example.hrms.entity.Role;
-import com.example.hrms.entity.Skill;
-import com.example.hrms.exception.ResourceNotFoundException;
 import com.example.hrms.mapper.EmployeeMapper;
 import com.example.hrms.repository.EmployeeRepository;
+import com.example.hrms.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/employees")
@@ -23,6 +21,7 @@ public class AdminController {
 
     private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmployeeService employeeService;
 
     // 1️⃣ Tạo admin đầu tiên (tạm public)
     @PostMapping("/init")
@@ -69,71 +68,14 @@ public class AdminController {
     // 3️⃣ Cập nhật nhân viên
     @PutMapping("/{id}")
     public ResponseEntity<?> updateEmployee(@PathVariable Long id, @RequestBody EmployeeDTO dto) {
-        Employee emp = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
-
-        Optional.ofNullable(dto.getFullName()).ifPresent(emp::setFullName);
-        Optional.ofNullable(dto.getEmail()).ifPresent(emp::setEmail);
-        Optional.ofNullable(dto.getPhone()).ifPresent(emp::setPhone);
-        Optional.ofNullable(dto.getDob()).ifPresent(emp::setDob);
-        Optional.ofNullable(dto.getPosition()).ifPresent(emp::setPosition);
-        Optional.ofNullable(dto.getAddress()).ifPresent(emp::setAddress);
-        Optional.ofNullable(dto.getDepartment()).ifPresent(emp::setDepartment);
-        Optional.ofNullable(dto.getDepartmentId()).ifPresent(emp::setDepartmentId);
-        Optional.ofNullable(dto.getStartDate()).ifPresent(emp::setStartDate);
-        Optional.ofNullable(dto.getManagerName()).ifPresent(emp::setManagerName);
-        Optional.ofNullable(dto.getContractType()).ifPresent(emp::setContractType);
-        Optional.ofNullable(dto.getContractEndDate()).ifPresent(emp::setContractEndDate);
-        if (dto.getExperienceYears() > 0) emp.setExperienceYears(dto.getExperienceYears());
-        Optional.ofNullable(dto.getGrade()).ifPresent(emp::setGrade);
-        if (dto.getPerformanceRate() > 0) emp.setPerformanceRate(dto.getPerformanceRate());
-        Optional.ofNullable(dto.getEmployeeCode()).ifPresent(emp::setEmployeeCode);
-        if (dto.getSalary() > 0) emp.setSalary(dto.getSalary());
-
-        // Update username
-        Optional.ofNullable(dto.getUsername()).ifPresent(emp::setUsername);
-
-        // Update role
-        Optional.ofNullable(dto.getRole()).ifPresent(r -> emp.setRole(Role.valueOf(r.toUpperCase())));
-
-        // Update password
-        if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
-            emp.setPassword(passwordEncoder.encode(dto.getPassword()));
-        }
-
-        // Update skills: KHÔNG thay collection, chỉ clear + add (tránh lỗi orphanRemoval)
-        if (emp.getSkills() == null) {
-            emp.setSkills(new ArrayList<>());
-        }
-        emp.getSkills().clear();
-        if (dto.getSkills() != null) {
-            for (var sDto : dto.getSkills()) {
-                Skill skill = EmployeeMapper.toSkill(sDto);
-                skill.setEmployee(emp);
-                emp.getSkills().add(skill);
-            }
-        }
-
-        // Update certificates: tương tự, clear + add vào list hiện tại
-        if (emp.getCertificates() == null) {
-            emp.setCertificates(new ArrayList<>());
-        }
-        emp.getCertificates().clear();
-        if (dto.getCertificates() != null) {
-            emp.getCertificates().addAll(dto.getCertificates());
-        }
-
-        employeeRepository.save(emp);
-        return ResponseEntity.ok(Map.of("message", "Employee updated", "employee", EmployeeMapper.toDTO(emp)));
+        EmployeeDTO updated = employeeService.update(id, dto);
+        return ResponseEntity.ok(Map.of("message", "Employee updated", "employee", updated));
     }
 
     // 4️⃣ Lấy danh sách tất cả nhân viên (trả về List<EmployeeDTO> cho frontend)
     @GetMapping
     public ResponseEntity<List<EmployeeDTO>> listEmployees() {
-        List<EmployeeDTO> employees = employeeRepository.findAll()
-                .stream()
-                .map(EmployeeMapper::toDTO)
-                .collect(Collectors.toList());
+        List<EmployeeDTO> employees = employeeService.getAll();
         return ResponseEntity.ok(employees);
     }
 
