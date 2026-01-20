@@ -1,4 +1,5 @@
 package com.example.hrms.controller;
+import java.util.Map;
 
 import com.example.hrms.dto.TaskDTO;
 import com.example.hrms.service.TaskService;
@@ -59,9 +60,15 @@ public class TaskController {
 
     // --- Employee: update my task status ---
     @PatchMapping("/tasks/{id}/status")
-    public ResponseEntity<TaskDTO> updateMyTaskStatus(@PathVariable Long id, @RequestParam String status, Authentication authentication) {
+    public ResponseEntity<TaskDTO> updateMyTaskStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            Authentication authentication) {
         String username = authentication.getName();
+        String status = body.get("status");
+
         TaskDTO updated = taskService.updateTaskStatusAsEmployee(id, username, status);
         return ResponseEntity.ok(updated);
     }
+
 }
