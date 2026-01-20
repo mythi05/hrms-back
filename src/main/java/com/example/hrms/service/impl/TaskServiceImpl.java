@@ -138,6 +138,10 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 
+        if (task.getAssigneeId() == null) {
+            throw new IllegalArgumentException("Task has no assignee");
+        }
+
         if (!emp.getId().equals(task.getAssigneeId())) {
             throw new IllegalArgumentException("You are not allowed to update this task");
         }
