@@ -142,7 +142,16 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException("You are not allowed to update this task");
         }
 
-        TaskStatus newStatus = TaskStatus.valueOf(status.toUpperCase());
+        if (status == null || status.isBlank()) {
+            throw new IllegalArgumentException("Missing required status");
+        }
+
+        TaskStatus newStatus;
+        try {
+            newStatus = TaskStatus.valueOf(status.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid status: " + status + ". Allowed: NEW, IN_PROGRESS, COMPLETED, CANCELLED");
+        }
         task.setStatus(newStatus);
         task.setUpdatedAt(LocalDateTime.now());
 

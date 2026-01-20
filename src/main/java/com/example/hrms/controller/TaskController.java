@@ -1,5 +1,4 @@
 package com.example.hrms.controller;
-import java.util.Map;
 
 import com.example.hrms.dto.TaskDTO;
 import com.example.hrms.service.TaskService;
@@ -9,6 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -62,13 +62,16 @@ public class TaskController {
     @PatchMapping("/tasks/{id}/status")
     public ResponseEntity<TaskDTO> updateMyTaskStatus(
             @PathVariable Long id,
-            @RequestBody Map<String, String> body,
-            Authentication authentication) {
+            @RequestParam(name = "status", required = false) String status,
+            @RequestBody(required = false) Map<String, Object> body,
+            Authentication authentication
+    ) {
         String username = authentication.getName();
-        String status = body.get("status");
-
-        TaskDTO updated = taskService.updateTaskStatusAsEmployee(id, username, status);
+        String resolvedStatus = status;
+        if ((resolvedStatus == null || resolvedStatus.isBlank()) && body != null && body.get("status") != null) {
+            resolvedStatus = String.valueOf(body.get("status"));
+        }
+        TaskDTO updated = taskService.updateTaskStatusAsEmployee(id, username, resolvedStatus);
         return ResponseEntity.ok(updated);
     }
-
 }
