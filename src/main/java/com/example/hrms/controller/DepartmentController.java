@@ -1,6 +1,8 @@
 package com.example.hrms.controller;
 
+import com.example.hrms.dto.EmployeeDTO;
 import com.example.hrms.entity.Department;
+import com.example.hrms.mapper.EmployeeMapper;
 import com.example.hrms.service.DepartmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -60,9 +62,12 @@ public class DepartmentController {
 
     @GetMapping("/{id}/employees")
     @PreAuthorize("hasAnyRole('HR','ADMIN')")
-    public ResponseEntity<?> getDepartmentEmployees(@PathVariable Long id) {
+    public ResponseEntity<java.util.List<EmployeeDTO>> getDepartmentEmployees(@PathVariable Long id) {
         return ResponseEntity.ok(
-            departmentService.getDepartmentEmployees(id)
+                departmentService.getDepartmentEmployees(id)
+                        .stream()
+                        .map(EmployeeMapper::toDTO)
+                        .toList()
         );
     }
 
