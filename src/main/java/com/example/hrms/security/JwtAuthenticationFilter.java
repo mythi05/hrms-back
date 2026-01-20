@@ -90,7 +90,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         } catch (Exception ex) {
             log.error("Authentication error: {}", ex.getMessage(), ex);
-            handleException(response, "Lỗi xác thực", HttpStatus.INTERNAL_SERVER_ERROR);
+            // Never fail auth with 500: treat as unauthorized so client can re-login.
+            handleException(response, "Unauthorized", HttpStatus.UNAUTHORIZED);
             return;
         }
 
