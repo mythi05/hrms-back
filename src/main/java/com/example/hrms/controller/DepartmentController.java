@@ -2,7 +2,7 @@ package com.example.hrms.controller;
 
 import com.example.hrms.dto.EmployeeDTO;
 import com.example.hrms.entity.Department;
-import com.example.hrms.mapper.EmployeeMapper;
+import com.example.hrms.entity.Employee;
 import com.example.hrms.service.DepartmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -66,9 +66,22 @@ public class DepartmentController {
         return ResponseEntity.ok(
                 departmentService.getDepartmentEmployees(id)
                         .stream()
-                        .map(EmployeeMapper::toDTO)
+                        .map(this::toLightEmployeeDTO)
                         .toList()
         );
+    }
+
+    private EmployeeDTO toLightEmployeeDTO(Employee e) {
+        return EmployeeDTO.builder()
+                .id(e.getId())
+                .fullName(e.getFullName())
+                .username(e.getUsername())
+                .employeeCode(e.getEmployeeCode())
+                .department(e.getDepartment())
+                .departmentId(e.getDepartmentId())
+                .position(e.getPosition())
+                .role(e.getRole() != null ? e.getRole().name() : null)
+                .build();
     }
 
     @GetMapping("/with-count")
