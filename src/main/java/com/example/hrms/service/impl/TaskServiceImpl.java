@@ -14,6 +14,8 @@ import com.example.hrms.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -57,8 +59,62 @@ public class TaskServiceImpl implements TaskService {
         // Gửi thông báo cho nhân viên khi được giao việc mới
         if (assignee != null) {
             String title = "Bạn được giao công việc mới";
-            String message = "Công việc: " + saved.getTitle() + (saved.getDueDate() != null ? (", hạn hoàn thành: " + saved.getDueDate()) : "");
+            String message = "Công việc: " + saved.getTitle()
+                    + (saved.getDueDate() != null ? (", hạn hoàn thành: " + saved.getDueDate()) : "");
             notificationService.createNotification(assignee.getId(), title, message, NotificationType.TASK_ASSIGNED);
+        }
+
+        return TaskMapper.toDTO(saved);
+    }
+
+    @Override
+    public TaskDTO updateTaskStatusAsEmployee(Long taskId, String username, String status) {
+        Employee emp = employeeRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Employee not found"));
+
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Task not found"));
+
+        if (task.getAssigneeId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Task has no assignee");
+        }
+
+        if (!emp.getId().equals(task.getAssigneeId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "You are not allowed to update this task");
+        }
+
+        if (status == null || status.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Missing required status");
+        }
+
+        TaskStatus newStatus;
+        try {
+            newStatus = TaskStatus.valueOf(status.trim().toUpperCase());
+        } catch (Exception ex) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid status. Allowed: NEW, IN_PROGRESS, COMPLETED, CANCELLED");
+        }
+
+        task.setStatus(newStatus);
+        task.setUpdatedAt(LocalDateTime.now());
+
+        Task saved = taskRepository.save(task);
+
+        String title = "Cập nhật trạng thái công việc";
+        String message = (emp.getFullName() != null ? emp.getFullName() : emp.getUsername())
+                + " đã cập nhật công việc: " + saved.getTitle() + " -> " + saved.getStatus();
+
+        try {
+            notificationService.createNotificationForAdmins(
+                    title, message, NotificationType.TASK_STATUS_UPDATED);
+        } catch (Exception ex) {
+            // best-effort
         }
 
         return TaskMapper.toDTO(saved);
@@ -69,11 +125,16 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 
-        if (dto.getTitle() != null) task.setTitle(dto.getTitle());
-        if (dto.getDescription() != null) task.setDescription(dto.getDescription());
-        if (dto.getDueDate() != null) task.setDueDate(dto.getDueDate());
-        if (dto.getPriority() != null) task.setPriority(dto.getPriority());
-        if (dto.getStatus() != null) task.setStatus(dto.getStatus());
+        if (dto.getTitle() != null)
+            task.setTitle(dto.getTitle());
+        if (dto.getDescription() != null)
+            task.setDescription(dto.getDescription());
+        if (dto.getDueDate() != null)
+            task.setDueDate(dto.getDueDate());
+        if (dto.getPriority() != null)
+            task.setPriority(dto.getPriority());
+        if (dto.getStatus() != null)
+            task.setStatus(dto.getStatus());
 
         if (dto.getAssigneeId() != null) {
             Employee assignee = employeeRepository.findById(dto.getAssigneeId())
@@ -90,7 +151,8 @@ public class TaskServiceImpl implements TaskService {
             Employee assignee = employeeRepository.findById(saved.getAssigneeId()).orElse(null);
             if (assignee != null) {
                 String title = "Công việc của bạn đã được cập nhật";
-                String message = "Công việc: " + saved.getTitle() + (saved.getDueDate() != null ? (", hạn hoàn thành: " + saved.getDueDate()) : "");
+                String message = "Công việc: " + saved.getTitle()
+                        + (saved.getDueDate() != null ? (", hạn hoàn thành: " + saved.getDueDate()) : "");
                 notificationService.createNotification(assignee.getId(), title, message, NotificationType.TASK_UPDATED);
             }
         }
@@ -129,47 +191,5 @@ public class TaskServiceImpl implements TaskService {
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
         return getTasksByAssignee(emp.getId());
     }
+} 
 
-    @Override
-    public TaskDTO updateTaskStatusAsEmployee(Long taskId, String username, String status) {
-        Employee emp = employeeRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
-
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
-
-        if (task.getAssigneeId() == null) {
-            throw new IllegalArgumentException("Task has no assignee");
-        }
-
-        if (!emp.getId().equals(task.getAssigneeId())) {
-            throw new IllegalArgumentException("You are not allowed to update this task");
-        }
-
-        if (status == null || status.isBlank()) {
-            throw new IllegalArgumentException("Missing required status");
-        }
-
-        TaskStatus newStatus;
-        try {
-            newStatus = TaskStatus.valueOf(status.trim().toUpperCase());
-        } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Invalid status: " + status + ". Allowed: NEW, IN_PROGRESS, COMPLETED, CANCELLED");
-        }
-        task.setStatus(newStatus);
-        task.setUpdatedAt(LocalDateTime.now());
-
-        Task saved = taskRepository.save(task);
-
-        String title = "Cập nhật trạng thái công việc";
-        String message = (emp.getFullName() != null ? emp.getFullName() : emp.getUsername())
-                + " đã cập nhật công việc: " + saved.getTitle() + " -> " + saved.getStatus();
-        try {
-            notificationService.createNotificationForAdmins(title, message, NotificationType.TASK_STATUS_UPDATED);
-        } catch (Exception ex) {
-            // best-effort: do not fail task status update if notification fails
-        }
-
-        return TaskMapper.toDTO(saved);
-    }
-}
