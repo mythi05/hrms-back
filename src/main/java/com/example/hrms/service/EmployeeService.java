@@ -1,6 +1,8 @@
 package com.example.hrms.service;
 
 import com.example.hrms.dto.EmployeeDTO;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
 public interface EmployeeService {
@@ -14,6 +16,10 @@ public interface EmployeeService {
     EmployeeDTO getMe(String username);
 
     EmployeeDTO updateMe(String username, EmployeeDTO dto);
+
+    EmployeeDTO updateAvatar(Long id, MultipartFile file);
+
+    EmployeeDTO updateMyAvatar(String username, MultipartFile file);
 
     EmployeeDTO getById(Long id);
 

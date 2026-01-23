@@ -60,28 +60,18 @@ public class TaskController {
 
     // --- Employee: update my task status ---
     @PatchMapping("/tasks/{id}/status")
-public ResponseEntity<TaskDTO> updateMyTaskStatus(
-        @PathVariable Long id,
-        @RequestParam(name = "status", required = false) String status,
-        @RequestBody(required = false) Map<String, Object> body,
-        Authentication authentication
-) {
-    String username = authentication.getName();
-
-    String resolvedStatus = status;
-    if ((resolvedStatus == null || resolvedStatus.isBlank()) && body != null) {
-        Object s = body.get("status");
-        if (s != null) {
-            resolvedStatus = s.toString();
+    public ResponseEntity<TaskDTO> updateMyTaskStatus(
+            @PathVariable Long id,
+            @RequestParam(name = "status", required = false) String status,
+            @RequestBody(required = false) Map<String, Object> body,
+            Authentication authentication
+    ) {
+        String username = authentication.getName();
+        String resolvedStatus = status;
+        if ((resolvedStatus == null || resolvedStatus.isBlank()) && body != null && body.get("status") != null) {
+            resolvedStatus = String.valueOf(body.get("status"));
         }
+        TaskDTO updated = taskService.updateTaskStatusAsEmployee(id, username, resolvedStatus);
+        return ResponseEntity.ok(updated);
     }
-
-    if (resolvedStatus == null || resolvedStatus.isBlank()) {
-        throw new IllegalArgumentException("Status is required");
-    }
-
-    TaskDTO updated = taskService.updateTaskStatusAsEmployee(id, username, resolvedStatus);
-    return ResponseEntity.ok(updated);
-}
-
 }

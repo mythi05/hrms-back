@@ -5,7 +5,6 @@ import com.example.hrms.dto.SkillDTO;
 import com.example.hrms.entity.Employee;
 import com.example.hrms.entity.Role;
 import com.example.hrms.entity.Skill;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,9 +12,6 @@ import java.util.stream.Collectors;
 
 public class EmployeeMapper {
 
-    private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
-    // DTO → Entity
     public static Employee toEntity(EmployeeDTO dto) {
         List<Skill> skills = new ArrayList<>();
         if (dto.getSkills() != null) {
@@ -43,8 +39,10 @@ public class EmployeeMapper {
                 .performanceRate(dto.getPerformanceRate())
                 .employeeCode(dto.getEmployeeCode())
                 .salary(dto.getSalary())
+                .avatar(dto.getAvatar()) // Map avatar
+                .avatarPublicId(dto.getAvatarPublicId())
                 .username(dto.getUsername())
-                .password(dto.getPassword() != null ? passwordEncoder.encode(dto.getPassword()) : null)
+                .password(dto.getPassword())
                 .role(dto.getRole() != null ? Role.valueOf(dto.getRole().toUpperCase()) : Role.EMPLOYEE)
                 .emailNotifications(dto.getEmailNotifications())
                 .pushNotifications(dto.getPushNotifications())
@@ -57,13 +55,10 @@ public class EmployeeMapper {
                 .certificates(dto.getCertificates() != null ? dto.getCertificates() : new ArrayList<>())
                 .build();
 
-        // Set employee cho mỗi skill
         skills.forEach(skill -> skill.setEmployee(e));
-
         return e;
     }
 
-    // Entity → DTO
     public static EmployeeDTO toDTO(Employee e) {
         List<SkillDTO> skillDTOs = new ArrayList<>();
         if (e.getSkills() != null) {
@@ -99,6 +94,8 @@ public class EmployeeMapper {
                 .performanceRate(e.getPerformanceRate())
                 .employeeCode(e.getEmployeeCode())
                 .salary(e.getSalary())
+                .avatar(e.getAvatar()) // Map avatar
+                .avatarPublicId(e.getAvatarPublicId())
                 .skills(skillDTOs)
                 .certificates(certificates)
                 .username(e.getUsername())
@@ -113,19 +110,10 @@ public class EmployeeMapper {
                 .build();
     }
 
-    // SkillDTO → Skill
     public static Skill toSkill(SkillDTO dto) {
         Skill skill = new Skill();
         skill.setName(dto.getName());
         skill.setLevel(Integer.parseInt(dto.getLevel()));
         return skill;
-    }
-
-    // Skill → SkillDTO
-    public static SkillDTO toSkillDTO(Skill skill) {
-        return SkillDTO.builder()
-                .name(skill.getName())
-                .level(String.valueOf(skill.getLevel()))
-                .build();
     }
 }

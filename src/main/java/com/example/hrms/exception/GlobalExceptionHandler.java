@@ -2,6 +2,7 @@ package com.example.hrms.exception;
 
 import org.springframework.http.*;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
@@ -18,6 +19,35 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<?> handleNotFound(ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(DuplicateEmployeeCodeException.class)
+    public ResponseEntity<?> handleDuplicateEmployeeCode(DuplicateEmployeeCodeException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of(
+                        "message", ex.getMessage() == null ? "Employee code already exists" : ex.getMessage(),
+                        "type", ex.getClass().getName()
+                ));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<?> handleDataIntegrity(DataIntegrityViolationException ex) {
+        String msg = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
+        if (msg != null) {
+            String lower = msg.toLowerCase();
+            if (lower.contains("employeecode") || lower.contains("employee_code") || lower.contains("employees.employee_code") || lower.contains("employees.employeeCode")) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(Map.of(
+                                "message", "Mã nhân viên đã tồn tại!",
+                                "type", ex.getClass().getName()
+                        ));
+            }
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "message", "Data integrity violation",
+                        "type", ex.getClass().getName()
+                ));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

@@ -3,15 +3,16 @@ package com.example.hrms.controller;
 import com.example.hrms.dto.EmployeeDTO;
 import com.example.hrms.entity.Employee;
 import com.example.hrms.entity.Role;
-import com.example.hrms.mapper.EmployeeMapper;
 import com.example.hrms.repository.EmployeeRepository;
 import com.example.hrms.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/employees")
@@ -20,7 +21,6 @@ import java.util.*;
 public class AdminController {
 
     private final EmployeeRepository employeeRepository;
-    private final PasswordEncoder passwordEncoder;
     private final EmployeeService employeeService;
 
     // 1️⃣ Tạo admin đầu tiên (tạm public)
@@ -32,13 +32,21 @@ public class AdminController {
 
         Employee admin = Employee.builder()
                 .username("admin")
-                .password(passwordEncoder.encode("admin123"))
+                .password("admin123")
                 .fullName("Administrator")
                 .email("admin@example.com")
+                .employeeCode("ADMIN")
                 .role(Role.ADMIN)
                 .build();
 
-        employeeRepository.save(admin);
+        employeeService.create(EmployeeDTO.builder()
+                .username(admin.getUsername())
+                .password(admin.getPassword())
+                .fullName(admin.getFullName())
+                .email(admin.getEmail())
+                .employeeCode(admin.getEmployeeCode())
+                .role(admin.getRole().name())
+                .build());
         return ResponseEntity.ok(Map.of("message", "Admin account created successfully"));
     }
 
@@ -53,16 +61,8 @@ public class AdminController {
             return ResponseEntity.badRequest().body(Map.of("error", "Username already exists"));
         }
 
-        Employee emp = EmployeeMapper.toEntity(dto);
-        emp.setPassword(passwordEncoder.encode(dto.getPassword())); // encode password
-
-        // Set employee in each skill if any
-        if (emp.getSkills() != null) {
-            emp.getSkills().forEach(s -> s.setEmployee(emp));
-        }
-
-        employeeRepository.save(emp);
-        return ResponseEntity.ok(Map.of("message", "Employee created successfully", "employee", EmployeeMapper.toDTO(emp)));
+        EmployeeDTO created = employeeService.create(dto);
+        return ResponseEntity.ok(Map.of("message", "Employee created successfully", "employee", created));
     }
 
     // 3️⃣ Cập nhật nhân viên
@@ -87,5 +87,42 @@ public class AdminController {
         }
         employeeRepository.deleteById(id);
         return ResponseEntity.ok(Map.of("message", "Employee deleted"));
+    }
+
+    // 6️⃣ Xóa nhiều nhân viên (Admin only)
+    @PostMapping("/bulk-delete")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<?> bulkDeleteEmployees(@RequestBody List<Long> ids) {
+        try {
+            if (ids == null || ids.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Danh sách ID trống"));
+            }
+
+            List<Employee> found = employeeRepository.findAllById(ids);
+            if (found.isEmpty()) {
+                return ResponseEntity.ok(Map.of("deleted", 0, "skipped", 0));
+            }
+
+            List<Long> deletableIds = found.stream()
+                    .filter(e -> e.getRole() == null || e.getRole() != Role.ADMIN)
+                    .map(Employee::getId)
+                    .collect(Collectors.toList());
+
+            if (!deletableIds.isEmpty()) {
+                employeeRepository.deleteAllById(deletableIds);
+                employeeRepository.flush();
+            }
+
+            return ResponseEntity.ok(Map.of(
+                    "deleted", deletableIds.size(),
+                    "skipped", found.size() - deletableIds.size()
+            ));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(Map.of(
+                    "error", "Lỗi xoá nhiều nhân viên",
+                    "message", ex.getMessage()
+            ));
+        }
     }
 }

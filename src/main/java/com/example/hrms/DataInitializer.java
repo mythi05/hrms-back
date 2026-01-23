@@ -47,6 +47,7 @@ public class DataInitializer {
                         .startDate(LocalDate.now())
                         .department("IT")
                         .position("ADMIN")
+                        .employeeCode("ADMIN")
                         .username(adminUsername)
                         .password(passwordEncoder.encode(adminPassword))
                         .role(Role.ADMIN)

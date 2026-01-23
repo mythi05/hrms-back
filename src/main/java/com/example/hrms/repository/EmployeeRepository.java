@@ -12,19 +12,23 @@ import java.util.Optional;
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
-    // Thêm method này để filter có thể tìm Employee theo username
     Optional<Employee> findByUsername(String username);
+    boolean existsByUsername(String username);
+    boolean existsByUsernameAndIdNot(String username, Long id);
     
-    // Get department distribution
     @Query("SELECT e.department, COUNT(e) FROM Employee e WHERE e.department IS NOT NULL GROUP BY e.department")
     List<Object[]> getDepartmentDistribution();
     
-    // Find employees by birth month
     @Query("SELECT e FROM Employee e WHERE MONTH(e.dob) = :month")
     List<Employee> findByMonthOfBirth(int month);
     
-    // Find employees by department ID
     List<Employee> findByDepartmentId(Long departmentId);
 
     List<Employee> findByRole(Role role);
+
+    // Kiểm tra trùng mã nhân viên
+    boolean existsByEmployeeCode(String employeeCode);
+
+    // Kiểm tra trùng mã nhân viên khi update (trừ chính nhân viên hiện tại)
+    boolean existsByEmployeeCodeAndIdNot(String employeeCode, Long id);
 }

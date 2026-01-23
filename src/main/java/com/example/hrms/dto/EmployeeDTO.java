@@ -40,6 +40,10 @@ public class EmployeeDTO {
     private int performanceRate;
     private String employeeCode;
     private double salary;
+    
+    private String avatar; // Thêm trường avatar
+
+    private String avatarPublicId;
 
     private List<SkillDTO> skills;
     private List<String> certificates;

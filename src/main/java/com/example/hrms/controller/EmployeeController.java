@@ -25,10 +25,10 @@ public class EmployeeController {
     private final EmployeeService employeeService;
     private final ExcelService excelService;
 
-    // --- Lấy profile của chính user đang login ---
+    // Lấy profile của chính user đang login
     @GetMapping("/me")
     public ResponseEntity<EmployeeDTO> getMyProfile(Authentication authentication) {
-        String username = authentication.getName(); // lấy username từ JWT
+        String username = authentication.getName(); 
         EmployeeDTO profile = employeeService.getMe(username);
         return ResponseEntity.ok(profile);
     }
@@ -40,53 +40,60 @@ public class EmployeeController {
         return ResponseEntity.ok(updated);
     }
 
-    // --- Lấy employee theo id ---
+    @PostMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<EmployeeDTO> updateMyAvatar(Authentication authentication, @RequestParam("file") MultipartFile file) {
+        String username = authentication.getName();
+        EmployeeDTO updated = employeeService.updateMyAvatar(username, file);
+        return ResponseEntity.ok(updated);
+    }
+
+    // Lấy employee theo id
     @GetMapping("/{id}")
     public ResponseEntity<EmployeeDTO> getEmployeeById(@PathVariable Long id) {
         EmployeeDTO employee = employeeService.getById(id);
         return ResponseEntity.ok(employee);
     }
 
-    // --- Lấy tất cả nhân viên ---
+    // Lấy tất cả nhân viên
     @GetMapping
     public ResponseEntity<List<EmployeeDTO>> getAllEmployees() {
         List<EmployeeDTO> employees = employeeService.getAll();
         return ResponseEntity.ok(employees);
     }
 
-    // --- Tạo mới ---
+    // Tạo mới (Logic kiểm tra trùng mã đã nằm ở Service)
     @PostMapping
     public ResponseEntity<EmployeeDTO> createEmployee(@RequestBody EmployeeDTO dto) {
         EmployeeDTO created = employeeService.create(dto);
         return ResponseEntity.ok(created);
     }
 
-    // --- Cập nhật ---
+    // Cập nhật (Logic kiểm tra trùng mã đã nằm ở Service)
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeDTO> updateEmployee(@PathVariable Long id, @RequestBody EmployeeDTO dto) {
         EmployeeDTO updated = employeeService.update(id, dto);
         return ResponseEntity.ok(updated);
     }
 
-    // --- Xóa ---
+    @PostMapping(value = "/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<EmployeeDTO> updateEmployeeAvatar(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        EmployeeDTO updated = employeeService.updateAvatar(id, file);
+        return ResponseEntity.ok(updated);
+    }
+
+    // Xóa
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEmployee(@PathVariable Long id) {
         employeeService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
-    // --- Export/Import Excel/CSV ---
+    // Export Excel
     @GetMapping("/admin/export")
     public ResponseEntity<ByteArrayResource> exportEmployees() {
         List<EmployeeDTO> employees = employeeService.getAll();
-        
-        // Convert to DTO format for Excel service
-        List<AttendanceDTO> dummyList = new ArrayList<>(); // We'll modify ExcelService to handle employees
-        
         byte[] excelData = excelService.exportEmployeesToExcel(employees);
-        
         ByteArrayResource resource = new ByteArrayResource(excelData);
-        
         String filename = "nhan_vien_" + LocalDate.now() + ".xlsx";
 
         return ResponseEntity.ok()
@@ -96,6 +103,7 @@ public class EmployeeController {
                 .body(resource);
     }
 
+    // Import Excel/CSV
     @PostMapping("/admin/import")
     public ResponseEntity<?> importEmployees(@RequestParam("file") MultipartFile file) {
         try {
@@ -106,21 +114,18 @@ public class EmployeeController {
             }
 
             List<EmployeeDTO> employees = excelService.importEmployeesFromExcel(file);
-            
-            // Save imported employees
-            List<EmployeeDTO> savedEmployees = new ArrayList<>();
+            int savedCount = 0;
             for (EmployeeDTO dto : employees) {
                 try {
-                    EmployeeDTO saved = employeeService.create(dto);
-                    savedEmployees.add(saved);
+                    // Gọi service create (nếu trùng mã nó sẽ văng Exception và lọt vào catch bên dưới)
+                    employeeService.create(dto);
+                    savedCount++;
                 } catch (Exception e) {
-                    // Continue with other records if one fails
+                    // Bỏ qua dòng bị trùng mã hoặc lỗi định dạng, tiếp tục dòng tiếp theo
                     continue;
                 }
             }
-
-            return ResponseEntity.ok(new ImportResult(savedEmployees.size(), employees.size()));
-            
+            return ResponseEntity.ok(new ImportResult(savedCount, employees.size()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Lỗi khi import file: " + e.getMessage());
         }
@@ -129,9 +134,7 @@ public class EmployeeController {
     @GetMapping("/admin/template")
     public ResponseEntity<ByteArrayResource> downloadEmployeeTemplate() {
         byte[] templateData = excelService.exportEmployeesToExcel(new ArrayList<>());
-        
         ByteArrayResource resource = new ByteArrayResource(templateData);
-        
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=template_nhan_vien.xlsx")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -139,16 +142,13 @@ public class EmployeeController {
                 .body(resource);
     }
 
-    // Helper class for import result
     public static class ImportResult {
         private int imported;
         private int total;
-
         public ImportResult(int imported, int total) {
             this.imported = imported;
             this.total = total;
         }
-
         public int getImported() { return imported; }
         public int getTotal() { return total; }
     }

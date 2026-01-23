@@ -7,9 +7,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Entity
 @Table(name = "employees")
 @Getter
@@ -31,8 +28,10 @@ public class Employee {
     private String address;
     private String position;
     private String department;
+    
     @Column(name = "department_id")
     private Long departmentId;
+    
     private LocalDate startDate;
     private String managerName;
     private String contractType;
@@ -40,8 +39,15 @@ public class Employee {
     private int experienceYears;
     private String grade;
     private int performanceRate;
+
+    @Column(unique = true, nullable = false) // Đảm bảo mã nhân viên là duy nhất
     private String employeeCode;
+
     private double salary;
+    
+    private String avatar; // Trường lưu URL ảnh từ Cloudinary
+
+    private String avatarPublicId;
 
     @Column(unique = true)
     private String username;

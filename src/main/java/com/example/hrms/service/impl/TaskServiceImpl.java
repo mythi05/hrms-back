@@ -12,7 +12,6 @@ import com.example.hrms.repository.TaskRepository;
 import com.example.hrms.service.NotificationService;
 import com.example.hrms.service.TaskService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,19 +21,14 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
+@Transactional
 public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
     private final EmployeeRepository employeeRepository;
     private final NotificationService notificationService;
 
-    // =========================
-    // ADMIN / HR
-    // =========================
-
     @Override
-    @Transactional
     public TaskDTO createTask(TaskDTO dto, String creatorUsername) {
         Employee creator = employeeRepository.findByUsername(creatorUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("Creator not found"));
@@ -45,43 +39,32 @@ public class TaskServiceImpl implements TaskService {
                     .orElseThrow(() -> new ResourceNotFoundException("Assignee not found"));
         }
 
-        Task task = TaskMapper.toEntity(dto);
-        task.setId(null);
-        task.setStatus(dto.getStatus() != null ? dto.getStatus() : TaskStatus.NEW);
-        task.setCreatedAt(LocalDateTime.now());
-        task.setUpdatedAt(LocalDateTime.now());
-        task.setCreatedById(creator.getId());
-        task.setCreatedByName(creator.getFullName());
+        Task entity = TaskMapper.toEntity(dto);
+        entity.setId(null);
+        entity.setStatus(dto.getStatus() != null ? dto.getStatus() : TaskStatus.NEW);
+        entity.setCreatedAt(LocalDateTime.now());
+        entity.setUpdatedAt(LocalDateTime.now());
+        entity.setCreatedById(creator.getId());
+        entity.setCreatedByName(creator.getFullName());
 
         if (assignee != null) {
-            task.setAssigneeId(assignee.getId());
-            task.setAssigneeName(assignee.getFullName());
+            entity.setAssigneeId(assignee.getId());
+            entity.setAssigneeName(assignee.getFullName());
         }
 
-        Task saved = taskRepository.save(task);
+        Task saved = taskRepository.save(entity);
 
-        // gửi notification SAU KHI save (best-effort)
+        // Gửi thông báo cho nhân viên khi được giao việc mới
         if (assignee != null) {
-            try {
-                String title = "Bạn được giao công việc mới";
-                String message = "Công việc: " + saved.getTitle()
-                        + (saved.getDueDate() != null ? ", hạn: " + saved.getDueDate() : "");
-                notificationService.createNotification(
-                        assignee.getId(),
-                        title,
-                        message,
-                        NotificationType.TASK_ASSIGNED
-                );
-            } catch (Exception ex) {
-                log.warn("Notification failed (createTask): {}", ex.getMessage());
-            }
+            String title = "Bạn được giao công việc mới";
+            String message = "Công việc: " + saved.getTitle() + (saved.getDueDate() != null ? (", hạn hoàn thành: " + saved.getDueDate()) : "");
+            notificationService.createNotification(assignee.getId(), title, message, NotificationType.TASK_ASSIGNED);
         }
 
         return TaskMapper.toDTO(saved);
     }
 
     @Override
-    @Transactional
     public TaskDTO updateTask(Long id, TaskDTO dto) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
@@ -100,21 +83,15 @@ public class TaskServiceImpl implements TaskService {
         }
 
         task.setUpdatedAt(LocalDateTime.now());
-        Task saved = taskRepository.save(task);
 
-        // notification best-effort
+        Task saved = taskRepository.save(task);
+        // Gửi thông báo cập nhật công việc cho nhân viên được giao (nếu có)
         if (saved.getAssigneeId() != null) {
-            try {
+            Employee assignee = employeeRepository.findById(saved.getAssigneeId()).orElse(null);
+            if (assignee != null) {
                 String title = "Công việc của bạn đã được cập nhật";
-                String message = "Công việc: " + saved.getTitle();
-                notificationService.createNotification(
-                        saved.getAssigneeId(),
-                        title,
-                        message,
-                        NotificationType.TASK_UPDATED
-                );
-            } catch (Exception ex) {
-                log.warn("Notification failed (updateTask): {}", ex.getMessage());
+                String message = "Công việc: " + saved.getTitle() + (saved.getDueDate() != null ? (", hạn hoàn thành: " + saved.getDueDate()) : "");
+                notificationService.createNotification(assignee.getId(), title, message, NotificationType.TASK_UPDATED);
             }
         }
 
@@ -122,7 +99,6 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    @Transactional
     public void deleteTask(Long id) {
         if (!taskRepository.existsById(id)) {
             throw new ResourceNotFoundException("Task not found");
@@ -146,10 +122,6 @@ public class TaskServiceImpl implements TaskService {
                 .collect(Collectors.toList());
     }
 
-    // =========================
-    // EMPLOYEE
-    // =========================
-
     @Override
     @Transactional(readOnly = true)
     public List<TaskDTO> getMyTasks(String username) {
@@ -159,7 +131,6 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    @Transactional
     public TaskDTO updateTaskStatusAsEmployee(Long taskId, String username, String status) {
         Employee emp = employeeRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
@@ -167,35 +138,36 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 
-        if (task.getAssigneeId() == null || !emp.getId().equals(task.getAssigneeId())) {
+        if (task.getAssigneeId() == null) {
+            throw new IllegalArgumentException("Task has no assignee");
+        }
+
+        if (!emp.getId().equals(task.getAssigneeId())) {
             throw new IllegalArgumentException("You are not allowed to update this task");
+        }
+
+        if (status == null || status.isBlank()) {
+            throw new IllegalArgumentException("Missing required status");
         }
 
         TaskStatus newStatus;
         try {
             newStatus = TaskStatus.valueOf(status.trim().toUpperCase());
-        } catch (Exception ex) {
-            throw new IllegalArgumentException(
-                    "Invalid status. Allowed: NEW, IN_PROGRESS, COMPLETED, CANCELLED"
-            );
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid status: " + status + ". Allowed: NEW, IN_PROGRESS, COMPLETED, CANCELLED");
         }
-
         task.setStatus(newStatus);
         task.setUpdatedAt(LocalDateTime.now());
+
         Task saved = taskRepository.save(task);
 
-        // notify admin (best-effort)
+        String title = "Cập nhật trạng thái công việc";
+        String message = (emp.getFullName() != null ? emp.getFullName() : emp.getUsername())
+                + " đã cập nhật công việc: " + saved.getTitle() + " -> " + saved.getStatus();
         try {
-            String title = "Cập nhật trạng thái công việc";
-            String message = emp.getFullName() + " cập nhật: "
-                    + saved.getTitle() + " → " + saved.getStatus();
-            notificationService.createNotificationForAdmins(
-                    title,
-                    message,
-                    NotificationType.TASK_STATUS_UPDATED
-            );
+            notificationService.createNotificationForAdmins(title, message, NotificationType.TASK_STATUS_UPDATED);
         } catch (Exception ex) {
-            log.warn("Notification failed (updateTaskStatus): {}", ex.getMessage());
+            // best-effort: do not fail task status update if notification fails
         }
 
         return TaskMapper.toDTO(saved);

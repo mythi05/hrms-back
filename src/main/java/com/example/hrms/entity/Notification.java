@@ -34,6 +34,9 @@ public class Notification {
     private LocalDateTime createdAt;
 
     public enum NotificationType {
+        EMPLOYEE_CREATED,
+        EMPLOYEE_UPDATED,
+        EMPLOYEE_AVATAR_UPDATED,
         PAYROLL,
         PAYROLL_UPDATED,
         LEAVE_APPROVED,
