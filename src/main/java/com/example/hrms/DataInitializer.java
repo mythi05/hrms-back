@@ -2,9 +2,7 @@ package com.example.hrms;
 
 import com.example.hrms.entity.Employee;
 import com.example.hrms.entity.Role;
-import com.example.hrms.entity.User;
 import com.example.hrms.repository.EmployeeRepository;
-import com.example.hrms.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -19,7 +17,6 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class DataInitializer {
 
-    private final UserRepository userRepository;
     private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
 

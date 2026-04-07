@@ -1,7 +1,6 @@
 package com.example.hrms.security;
 
 import com.example.hrms.entity.Employee;
-import com.example.hrms.exception.TokenValidationException;
 import com.example.hrms.repository.EmployeeRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -28,7 +27,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Objects;
 
 @Slf4j
 @Component

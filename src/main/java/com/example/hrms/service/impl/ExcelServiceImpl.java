@@ -2,7 +2,6 @@ package com.example.hrms.service.impl;
 
 import com.example.hrms.dto.AttendanceDTO;
 import com.example.hrms.dto.EmployeeDTO;
-import com.example.hrms.entity.Attendance;
 import com.example.hrms.service.ExcelService;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
@@ -539,41 +538,5 @@ public class ExcelServiceImpl implements ExcelService {
         }
         
         return employees;
-    }
-
-    private String getStatusText(Attendance.Status status) {
-        if (status == null) return "";
-        switch (status) {
-            case PRESENT: return "Có mặt";
-            case LATE: return "Đi muộn";
-            case ABSENT: return "Vắng mặt";
-            case LEAVE: return "Nghỉ phép";
-            case HOLIDAY: return "Ngày lễ";
-            default: return status.toString();
-        }
-    }
-
-    private Attendance.Status getStatusFromText(String text) {
-        if (text == null || text.trim().isEmpty()) return Attendance.Status.PRESENT;
-        
-        switch (text.trim().toLowerCase()) {
-            case "có mặt":
-            case "present":
-                return Attendance.Status.PRESENT;
-            case "đi muộn":
-            case "late":
-                return Attendance.Status.LATE;
-            case "vắng mặt":
-            case "absent":
-                return Attendance.Status.ABSENT;
-            case "nghỉ phép":
-            case "leave":
-                return Attendance.Status.LEAVE;
-            case "ngày lễ":
-            case "holiday":
-                return Attendance.Status.HOLIDAY;
-            default:
-                return Attendance.Status.PRESENT;
-        }
     }
 }

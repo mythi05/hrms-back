@@ -188,13 +188,10 @@ public class PayrollServiceImpl implements PayrollService {
         long absentDays = attendances.stream()
                 .filter(a -> a.getStatus() == Attendance.Status.ABSENT)
                 .count();
-        long leaveDays = attendances.stream()
-                .filter(a -> a.getStatus() == Attendance.Status.LEAVE)
-                .count();
         
         // Tính lương theo số ngày đi làm thực tế
         // Giả định 22 ngày làm việc chuẩn/tháng (trừ chủ nhật)
-        BigDecimal dailySalary = basicSalary.divide(BigDecimal.valueOf(22), 2, BigDecimal.ROUND_HALF_UP);
+        BigDecimal dailySalary = basicSalary.divide(BigDecimal.valueOf(22), 2, java.math.RoundingMode.HALF_UP);
         BigDecimal actualSalary = dailySalary.multiply(BigDecimal.valueOf(presentDays));
         
         // Phạt đi muộn: trừ 50% lương ngày cho mỗi ngày đi muộn

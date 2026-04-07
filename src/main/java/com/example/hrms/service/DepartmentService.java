@@ -41,7 +41,7 @@ public class DepartmentService {
         
         // Kiểm tra manager có tồn tại không
         if (department.getManagerId() != null) {
-            Employee manager = employeeRepository.findById(department.getManagerId())
+            employeeRepository.findById(department.getManagerId())
                     .orElseThrow(() -> new RuntimeException("Manager not found with id: " + department.getManagerId()));
         }
         
@@ -61,7 +61,7 @@ public class DepartmentService {
         
         // Kiểm tra manager có tồn tại không
         if (departmentDetails.getManagerId() != null) {
-            Employee manager = employeeRepository.findById(departmentDetails.getManagerId())
+            employeeRepository.findById(departmentDetails.getManagerId())
                     .orElseThrow(() -> new RuntimeException("Manager not found with id: " + departmentDetails.getManagerId()));
         }
         

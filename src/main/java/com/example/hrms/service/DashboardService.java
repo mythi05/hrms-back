@@ -43,7 +43,6 @@ public class DashboardService {
 
     // Employee Dashboard Stats
     public Map<String, Object> getEmployeeStats(Long employeeId) {
-        LocalDate today = LocalDate.now();
         YearMonth currentMonth = YearMonth.now();
         
         // Get current month attendance
